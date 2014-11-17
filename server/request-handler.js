@@ -11,8 +11,11 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
+var url = require('url');
+var messages = [];
 
 var requestHandler = function(request, response) {
+
   // Request and Response come from node's http module.
   //
   // They include information about both the incoming request, such as
@@ -40,6 +43,33 @@ var requestHandler = function(request, response) {
   // You will need to change this if you are sending something
   // other than plain text, like JSON or HTML.
   headers['Content-Type'] = "text/plain";
+
+  var parsedURL = url.parse(request.url, true);
+
+  if (request.method === 'GET'){
+    if (parsedURL.pathname === '/classes/messages'){
+
+    }
+  }
+
+  if (request.method === 'POST'){
+    if (parsedURL.pathname === '/classes/messages'){
+      var receivedData = "";
+      var message = {};
+      request.on('data', function(chunk){
+        receivedData += chunk;
+      });
+
+      request.on('end', function(){
+        message = JSON.parse(receivedData);
+        message.createdAt = new Date(Date.now()).toISOString();
+        messages.push(message);
+        console.log(messages);
+      });
+    }
+  }
+
+
 
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
@@ -71,3 +101,4 @@ var defaultCorsHeaders = {
   "access-control-max-age": 10 // Seconds.
 };
 
+exports.requestHandler = requestHandler;
