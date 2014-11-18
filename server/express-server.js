@@ -2,12 +2,13 @@ var express = require('express');
 var bodyparser = require('body-parser');
 
 var app = express();
-app.use(bodyparser.json());
-
+var linksys = express.Router();
 
 var messages = [];
+var counter = 0;
 
-var linksys = express.Router();
+// Middlewarez
+app.use(bodyparser.json());
 
 app.use(function(req, res, next) {
   res.set({"Access-Control-Allow-Origin": "*",
@@ -20,39 +21,46 @@ app.use(function(req, res, next) {
 
 app.use(linksys);
 
-linksys.route('/classes/messages').options(function(req, res) {
-  res.send();
-})
-.get(function(req, res) {
-  res.json(messages);
-})
-.post(function(req, res) {
-  messages.push(req.body);
-  res.status(201).send();
+// Routes
+
+linksys.post('*', function(req, res, next){
+  req.body.createdAt = new Date(Date.now()).toISOString();
+  req.body.objectId = counter++;
+  next();
 });
 
-// app.get('/classes/messages', function(req, res) {
-//   res.json(messages);
-// });
+linksys.route('/classes/messages')
+  .options(function(req, res) {
+    res.send();
+  })
+  .get(function(req, res) {
+    res.json({
+      results: messages
+      });
+  })
+  .post(function(req, res) {
+    messages.push(req.body);
+    res.status(201).send();
+  });
 
-// app.post('/classes/:room', function(req, res) {
+linksys.route('/classes/:room')
+  .options(function(req, res) {
+    res.send();
+  })
+  .get(function(req, res) {
+    res.json({
+      results: messages.filter(function(msg) {
+        return msg.roomname === req.params.room;
+      })
+    })
+  })
+  .post(function(req, res) {
+    var msg = req.body;
+    msg.roomname = req.params.room;
+    messages.push(msg);
 
-// })
-
-// app.post('/classes/messages', function(req, res) {
-//   messages.push(req.body);
-//   res.status(201).send();
-// });
-
-// app.get('/classes/:room', function(req, res) {
-//   res.json(messages.filter(function(msg) {
-//     return msg === req.params.room;
-//   }))
-// })
-
-// app.get('/', function(req, res){
-//   res.send('blech');
-// });
+    res.status(201).send();
+  })
 
 var server = app.listen(3000, function() {
   var host = server.address().address;
@@ -61,9 +69,5 @@ var server = app.listen(3000, function() {
   console.log('Chatterbox-server listening at http://%s:%s', host, port);
 });
 
-cors = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "content-type, accept",
-  "Access-Control-Max-Age": 10 // Seconds.
-  };
+exports.app = app;
+exports.server = server;
