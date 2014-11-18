@@ -47,19 +47,32 @@ var requestHandler = function(request, response) {
   headers['Content-Type'] = "text/plain";
 
   var parsedURL = url.parse(request.url, true);
+  var segmentedPath = parsedURL.pathname.split('/');
 
   if (request.method === 'GET'){
-    if (parsedURL.pathname === '/classes/messages'){
-      headers['Content-Type'] = "application/json";
+    if (segmentedPath[1] === 'classes'){
+        headers['Content-Type'] = "application/json";
+        response.writeHead(statusCode, headers);
+      if (segmentedPath[2] === 'messages'){
+        response.end(JSON.stringify({
+          results: messages
+        }));
+      } else {
+        response.end(JSON.stringify({
+          results: messages.filter(function(message){
+            return message.roomname === segmentedPath[2];
+          })
+        }));
+      }
+    } else {
+      statusCode = 404;
       response.writeHead(statusCode, headers);
-      response.end(JSON.stringify({
-        results: messages
-      }));
+      response.end();
     }
   }
 
   if (request.method === 'POST'){
-    if (parsedURL.pathname === '/classes/messages'){
+    if (segmentedPath[1] === 'classes') {
       var receivedData = "";
       var message = {};
       request.on('data', function(chunk){
@@ -70,6 +83,10 @@ var requestHandler = function(request, response) {
         message = JSON.parse(receivedData);
         message.createdAt = new Date(Date.now()).toISOString();
         message.objectId = counter++;
+        if (segmentedPath[2] !== 'messages') {
+          message.roomname = segmentedPath[2];
+        }
+
         messages.push(message);
 
         statusCode = 201;
@@ -81,13 +98,12 @@ var requestHandler = function(request, response) {
         response.writeHead(statusCode, headers);
         response.end(responseData);
       });
-
     }
   }
 
   if (request.method === 'OPTIONS'){
     response.writeHead(statusCode, headers);
-    response.end('');
+    response.end();
   }
 
 
