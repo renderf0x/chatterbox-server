@@ -50,7 +50,11 @@ var requestHandler = function(request, response) {
 
   if (request.method === 'GET'){
     if (parsedURL.pathname === '/classes/messages'){
-
+      headers['Content-Type'] = "application/json";
+      response.writeHead(statusCode, headers);
+      response.end(JSON.stringify({
+        results: messages
+      }));
     }
   }
 
@@ -81,6 +85,10 @@ var requestHandler = function(request, response) {
     }
   }
 
+  if (request.method === 'OPTIONS'){
+    response.writeHead(statusCode, headers);
+    response.end('');
+  }
 
 
   // .writeHead() writes to the request line and headers of the response,
