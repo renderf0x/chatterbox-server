@@ -21,6 +21,10 @@ app.use(function(req, res, next) {
 
 app.use(linksys);
 
+// Static Routes
+
+linksys.use('/', express.static(__dirname + '/../client'));
+
 // Routes
 
 linksys.post('*', function(req, res, next){
@@ -63,11 +67,8 @@ linksys.route('/classes/:room')
   })
 
 var server = app.listen(3000, function() {
-  var host = server.address().address;
+  var host = server.address().address || '127.0.0.1';
   var port = server.address().port;
 
   console.log('Chatterbox-server listening at http://%s:%s', host, port);
 });
-
-exports.app = app;
-exports.server = server;
